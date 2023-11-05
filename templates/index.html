@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Light Control</title>
+    <style>
+        /* Simple spinner animation */
+        .loader {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            display: none; /* Hidden by default */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+
+        <h1>Light Control</h1>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!--spinner-->
+        <div class="spinner-border text-primary d-none" role="status" id="loader">
+            <span class="sr-only">Loading...</span>
+        </div>
+
+        <!-- The form -->
+        <form id="toggle-form" action="{{ url_for('toggle') }}" method="post">
+            <button type="button" id="turn-on" data-state="on" class="btn btn-success">Turn On</button>
+            <button type="button" id="turn-off" data-state="off" class="btn btn-danger">Turn Off</button>
+        </form>
+
+        <script>
+            document.getElementById('turn-on').onclick = function() { toggleLight('on'); };
+            document.getElementById('turn-off').onclick = function() { toggleLight('off'); };
+
+            function toggleLight(state) {
+                var form = document.getElementById('toggle-form');
+                var loader = document.getElementById('loader');
+
+                // Show the loader by removing the 'd-none' class and adding 'd-inline-block'
+                loader.classList.remove('d-none');
+                loader.classList.add('d-inline-block');
+
+                // Use Fetch API to send the POST request
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'state=' + state
+                }).then(response => {
+                    // Introduce a 1-second delay before processing the response
+                    return new Promise(resolve => {
+                        setTimeout(() => resolve(response), 1000);
+                    });
+                }).then(response => {
+                    return response.text();
+                }).then(html => {
+                    // Replace the whole body with the new HTML
+                    document.open();
+                    document.write(html);
+                    document.close();
+                }).catch(error => {
+                    console.error('Error:', error);
+                }).finally(() => {
+                    // Hide the loader after 1 second, regardless of the fetch completion
+                    setTimeout(() => {
+                        // Hide the loader by adding 'd-none' and removing 'd-inline-block'
+                        loader.classList.add('d-none');
+                        loader.classList.remove('d-inline-block');
+                    }, 1000);
+                });
+            }
+        </script>
+    </div>
+</body>
+</html>
